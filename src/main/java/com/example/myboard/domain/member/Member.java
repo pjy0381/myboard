@@ -1,11 +1,12 @@
 package com.example.myboard.domain.member;
 
+import com.example.myboard.domain.BaseTimeEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import javax.management.relation.Role;
+
 import javax.persistence.*;
 
 @Table(name = "MEMBER")
@@ -14,16 +15,16 @@ import javax.persistence.*;
 @Entity
 @AllArgsConstructor
 @Builder
-public class Member {
+public class Member extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "member_id")
     private Long id; //primary Key(회원 번호)
 
     @Column(nullable = false, length = 30, unique = true)
-    private String email; //이메일(아이디)
+    private String username; //이메일(아이디)
 
+    @Column(nullable = false)
     private String password; //비밀번호
 
     @Column(nullable = false, length = 30)
@@ -56,7 +57,7 @@ public class Member {
     }
 
     //나이
-    public void updateNickName(Integer age){
+    public void updateAge(Integer age){
         this.age = age;
     }
 
@@ -64,4 +65,5 @@ public class Member {
     public void encodingPassword(PasswordEncoder passwordEncoder){
         this.password = passwordEncoder.encode(password);
     }
+
 }
