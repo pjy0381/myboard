@@ -1,5 +1,8 @@
 package com.example.myboard.domain.global.config;
 
+import com.example.myboard.domain.global.jwt.filter.JwtAuthenticationProcessingFilter;
+import com.example.myboard.domain.global.jwt.service.JwtService;
+import com.example.myboard.domain.member.repository.MemberRepository;
 import com.example.myboard.domain.member.service.LoginFailureHandler;
 import com.example.myboard.domain.member.service.LoginService;
 import com.example.myboard.domain.global.login.filter.JsonUsernamePasswordAuthenticationFilter;
@@ -18,12 +21,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 
+import javax.servlet.Filter;
+
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig{
 
     private final LoginService loginService;
     private final ObjectMapper objectMapper;
+    private final MemberRepository memberRepository;
+    private final JwtService jwtService;
     @Bean
     protected SecurityFilterChain configure(HttpSecurity http) throws Exception{
 
@@ -39,7 +46,7 @@ public class SecurityConfig{
                 .anyRequest().authenticated();
 
         http.addFilterAfter(jsonUsernamePasswordLoginFilter(), LogoutFilter.class);
-
+        http.addFilterBefore(jwtAuthenticationProcessingFilter(), JsonUsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
     @Bean
@@ -48,27 +55,37 @@ public class SecurityConfig{
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(){
+    public AuthenticationManager authenticationManager() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(passwordEncoder());
+        provider.setUserDetailsService(loginService);
         return new ProviderManager(provider);
     }
 
     @Bean
     public LoginSuccessJWTProvideHandler loginSuccessJWTProvideHandler(){
-        return new LoginSuccessJWTProvideHandler();
+        return new LoginSuccessJWTProvideHandler(jwtService, memberRepository);//변경
     }
 
     @Bean
     public LoginFailureHandler loginFailureHandler(){
         return new LoginFailureHandler();
     }
+
     @Bean
     public JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordLoginFilter(){
-        JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter = new JsonUsernamePasswordAuthenticationFilter(objectMapper);
-        jsonUsernamePasswordAuthenticationFilter.setAuthenticationManager(authenticationManager());
-        jsonUsernamePasswordAuthenticationFilter.setAuthenticationSuccessHandler(loginSuccessJWTProvideHandler());
-        jsonUsernamePasswordAuthenticationFilter.setAuthenticationFailureHandler(loginFailureHandler());
-        return jsonUsernamePasswordAuthenticationFilter;
+        JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordLoginFilter = new JsonUsernamePasswordAuthenticationFilter(objectMapper);
+        jsonUsernamePasswordLoginFilter.setAuthenticationManager(authenticationManager());
+        jsonUsernamePasswordLoginFilter.setAuthenticationSuccessHandler(loginSuccessJWTProvideHandler());
+        jsonUsernamePasswordLoginFilter.setAuthenticationFailureHandler(loginFailureHandler());//변경
+        return jsonUsernamePasswordLoginFilter;
     }
+
+    @Bean
+    public JwtAuthenticationProcessingFilter  jwtAuthenticationProcessingFilter(){
+        JwtAuthenticationProcessingFilter jsonUsernamePasswordLoginFilter = new JwtAuthenticationProcessingFilter(jwtService, memberRepository);
+
+        return jsonUsernamePasswordLoginFilter;
+    }
+
 }

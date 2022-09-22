@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.annotation.Rollback;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
@@ -31,6 +32,7 @@ class MemberRepositoryTest {
     }
 
     @Test
+    @Rollback(false)
     public void 회원저장_성공() throws Exception{
         Member member = Member.builder().username("username").password("1234567890")
                         .name("Member1").nickName("NickName1").role(Role.USER).age(22).build();

@@ -41,7 +41,6 @@ public class JwtServiceImpl implements JwtService{
     private static final String BEARER = "Bearer ";
 
     private final MemberRepository memberRepository;
-    private final ObjectMapper objectMapper;
 
     @Override
     public String createAccessToken(String username) {
@@ -76,21 +75,30 @@ public class JwtServiceImpl implements JwtService{
     }
 
     @Override
-    public void sendToken(HttpServletResponse response, String accessToken, String refreshToken) throws IOException {
-        response.setContentType("application/json;charset=UTF-8");
+    public void sendAccessAndRefreshToken(HttpServletResponse response, String accessToken, String refreshToken){
         response.setStatus(HttpServletResponse.SC_OK);
 
         setAccessTokenHeader(response, accessToken);
         setRefreshTokenHeader(response, refreshToken);
 
-        Map<String,String> tokenMap = new HashMap<>();
+
+        Map<String, String> tokenMap = new HashMap<>();
         tokenMap.put(ACCESS_TOKEN_SUBJECT, accessToken);
         tokenMap.put(REFRESH_TOKEN_SUBJECT, refreshToken);
 
-        String token = objectMapper.writeValueAsString(tokenMap);
-
-        response.getWriter().write(token);
     }
+
+    @Override
+    public void sendAccessToken(HttpServletResponse response, String accessToken){
+        response.setStatus(HttpServletResponse.SC_OK);
+
+        setAccessTokenHeader(response, accessToken);
+
+
+        Map<String, String> tokenMap = new HashMap<>();
+        tokenMap.put(ACCESS_TOKEN_SUBJECT, accessToken);
+    }
+
 
     @Override
     public Optional<String> extractAccessToken(HttpServletRequest request) throws IOException, ServletException {
@@ -122,11 +130,22 @@ public class JwtServiceImpl implements JwtService{
 
     @Override
     public void setAccessTokenHeader(HttpServletResponse response, String accessToken) {
-        response.setHeader(accessToken,accessToken);
+        response.setHeader(accessHeader,accessToken);
     }
 
     @Override
     public void setRefreshTokenHeader(HttpServletResponse response, String refreshToken) {
         response.setHeader(refreshHeader, refreshToken);
+    }
+
+    @Override
+    public boolean isTokenValid(String token) {
+        try {
+            JWT.require(Algorithm.HMAC512(secret)).build().verify(token);
+            return true;
+        }catch (Exception e) {
+            log.error("유효하지 않은 Token입니다", e.getMessage());
+            return false;
+        }
     }
 }
