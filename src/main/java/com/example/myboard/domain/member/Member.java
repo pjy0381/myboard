@@ -1,10 +1,7 @@
 package com.example.myboard.domain.member;
 
 import com.example.myboard.domain.BaseTimeEntity;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.*;
@@ -19,12 +16,12 @@ public class Member extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "name_id")
     private Long id; //primary Key(회원 번호)
 
     @Column(nullable = false, length = 30, unique = true)
     private String username; //이메일(아이디)
 
-    @Column(nullable = false)
     private String password; //비밀번호
 
     @Column(nullable = false, length = 30)
@@ -39,6 +36,8 @@ public class Member extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private Role role; //권한(USER,ADMIN)
 
+    @Column(length = 1000)
+    private String refreshToken;
 
     //==회원 정보 수정==/
     //비밀번호
@@ -59,6 +58,16 @@ public class Member extends BaseTimeEntity {
     //나이
     public void updateAge(Integer age){
         this.age = age;
+    }
+
+    //jwt
+    public void updateRefreshToken(String refreshToken){
+        this.refreshToken = refreshToken;
+    }
+
+    //jwt 제거
+    public void destroyRefreshToken(){
+        this.refreshToken = null;
     }
 
     //==패스워드 암호화==//
